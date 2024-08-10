@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-size: cover;
+            background-position: center;
+            color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 0;
+            margin: 0;
+            position: relative;
+        }
+        #quiz-container {
+            max-height: 100%; 
+            overflow-y: auto;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.7); /* Transparent background */
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            width: 600px;
+        }
+        .question {
+            margin-bottom: 15px;
+        }
+        .answer {
+            margin-bottom: 5px;
+        }
+        .answer label {
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+        }
+        .answer input:checked + label {
+            background-color: #ddd;
+        }
+        .correct {
+            color: green;
+        }
+        .incorrect {
+            color: red;
+        }
+        .underline {
+            text-decoration: underline;
+        }
+        .sidebar {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 20px;
+            width: 200px;
+        }
+        .quiz-controls {
+            background: rgba(255, 255, 255, 0.7); /* Transparent background */
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .quiz-controls button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .quiz-controls button:hover {
+            background-color: #f0f0f0;
+        }
+        #result {
+            background: rgba(255, 255, 255, 0.7); /* Transparent background */
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            text-align: center;
+        }
+        #title-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.5); /* Transparent background */
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="title-panel">Quiz Gramatyka Hubcio</div>
+    <div id="quiz-container"></div>
+    <div class="sidebar">
+        <div class="quiz-controls">
+            <button onclick="checkAnswers()">Sprawdź odpowiedzi</button>
+            <button onclick="retryQuiz()">Spróbuj ponownie</button>
+            <button onclick="refreshPage()">Odśwież</button>
+        </div>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const allQuestions = [
+    { question: "Czym są upodobnienia fonetyczne?", answers: ["Procesem, w którym dźwięki w wyrazie stają się bardziej podobne do siebie.", "Zjawiskiem, w którym wyrazy zmieniają swoje znaczenie w kontekście.", "Zasady dotyczące poprawnej pisowni wyrazów."], correct: 0 },
+    { question: "Podaj przykład uproszczenia grup spółgłoskowych i wyjaśnij, na czym ono polega.", answers: ["„Skrzydło” → „skrido”; polega na usunięciu spółgłoski.", "„Wstęp” → „wstemp”; polega na dodaniu samogłoski.", "„Trzask” → „czask”; polega na redukcji liczby spółgłosek."], correct: 2 },
+    { question: "Co to jest utrata dźwięczności w wygłosie? Podaj przykład.", answers: ["Zjawisko, w którym dźwięczna spółgłoska na końcu wyrazu staje się bezdźwięczna, np. „chleb” → „chlep”.", "Proces, w którym samogłoski na końcu wyrazu są pomijane.", "Zmiana akcentu w wyrazie w zależności od kontekstu."], correct: 0 },
+    { question: "Wskaż przykład rozbieżności między mową a pismem.", answers: ["Wyraz „ptak” wymawiany jako „ptak”.", "Wyraz „jestem” wymawiany jako „jestem”.", "Wyraz „mówić” wymawiany jako „muwić”."], correct: 2 },
+    { question: "Zdefiniuj, co to jest wyraz podstawowy.", answers: ["Wyraz, który jest podstawą do tworzenia innych wyrazów.", "Wyraz, który nie ma żadnych synonimów.", "Wyraz, który jest najczęściej używany w języku."], correct: 0 },
+    { question: "Co to jest wyraz pochodny? Podaj przykład.", answers: ["Wyraz, który ma wiele znaczeń, np. „zamek”.", "Wyraz utworzony od innego wyrazu, np. „pisarz” od „pisać”.", "Wyraz, który nie zmienia formy w odmianie."], correct: 1 },
+    { question: "Wyjaśnij pojęcie podstawy słowotwórczej.", answers: ["To część wyrazu, która nie ulega zmianie w odmianie.", "To część wyrazu, od której tworzy się nowe wyrazy.", "To końcówka wyrazu, która wskazuje na jego rodzaj gramatyczny."], correct: 1 },
+    { question: "Wskaż temat słowotwórczy i formant w wyrazie \"pisarz\".", answers: ["Temat: „pis”; formant: „arz”", "Temat: „pisar”; formant: „z”", "Temat: „pisarz”; formant: brak"], correct: 0 },
+    { question: "Jakie rodzaje formantów znasz? Podaj przykład.", answers: ["Przedrostki, przyrostki, wrostki, np. „nadpisać”", "Synonimy, antonimy, homonimy, np. „słowo”", "Samogłoski, spółgłoski, dwuznaki, np. „kwiat”"], correct: 0 },
+    { question: "Wskaż funkcję formantu w nadawaniu znaczenia wyrazom pochodnym.", answers: ["Formant zmienia rodzaj gramatyczny wyrazu.", "Formant nadaje wyrazowi nowe znaczenie lub funkcję.", "Formant skraca wyraz, aby był łatwiejszy do wymówienia."], correct: 1 },
+    { question: "Wyjaśnij różnicę między realnym a słowotwórczym znaczeniem wyrazu.", answers: ["Realne znaczenie to znaczenie w kontekście, słowotwórcze to znaczenie w izolacji.", "Realne znaczenie to znaczenie potoczne, słowotwórcze to znaczenie naukowe.", "Realne znaczenie to znaczenie słownikowe, słowotwórcze to znaczenie historyczne."], correct: 0 },
+    { question: "Co to jest rodzina wyrazów? Podaj przykład.", answers: ["Grupa wyrazów o podobnym znaczeniu, np. „dom, mieszkanie”.", "Grupa wyrazów pochodzących od tego samego rdzenia, np. „dom, domek, domowy”.", "Grupa wyrazów o tej samej liczbie sylab, np. „kot, pies”."], correct: 1 },
+    { question: "Podaj przykłady wyrazów pokrewnych i wskaż ich rdzeń.", answers: ["„Kwiat, kwitnąć” – rdzeń: „kwiat”", "„Słońce, słoneczny” – rdzeń: „słoń”", "„Pies, piesek” – rdzeń: „pies”"], correct: 2 },
+    { question: "Jak tworzymy wyrazy złożone? Podaj przykład.", answers: ["Łącząc dwa wyrazy w jeden, np. „samochód” + „droga” = „samochododroga”.", "Dodając przedrostki do wyrazu, np. „przepisać”.", "Łącząc dwa wyrazy za pomocą łącznika, np. „listonosz”."], correct: 2 },
+    { question: "Czym różnią się typy wyrazów złożonych?", answers: ["Różnią się sposobem łączenia składników i ich znaczeniem, np. „samochód” (złożenie) vs. „samochód-drogowy” (złożenie z łącznikiem).", "Różnią się liczbą sylab.", "Różnią się tylko pisownią."], correct: 0 },
+    { question: "Co to jest imiesłów? Wymień rodzaje imiesłowów.", answers: ["Forma czasownika wyrażająca czas przeszły i przyszły; rodzaje: przeszły, przyszły.", "Forma czasownika wyrażająca czynność lub stan; rodzaje: przymiotnikowe, przysłówkowe.", "Forma czasownika używana tylko w trybie rozkazującym; rodzaje: rozkazujący, przypuszczający."], correct: 1 },
+    { question: "Jak tworzymy imiesłowy przymiotnikowe?", answers: ["Dodając końcówki „-ący”, „-ąca”, „-ące” do tematu czasownika.", "Dodając końcówki „-ąc”, „-ącą”, „-ącym” do tematu czasownika.", "Dodając końcówki „-ły”, „-ła”, „-ło” do tematu czasownika."], correct: 0 },
+    { question: "Jak tworzymy imiesłowy przysłówkowe?", answers: ["Dodając końcówki „-ąc”, „-wszy”, „-łszy” do tematu czasownika.", "Dodając końcówki „-ący”, „-ąca”, „-ące” do tematu czasownika.", "Dodając końcówki „-ły”, „-ła”, „-ło” do tematu czasownika."], correct: 0 },
+    { question: "Przekształć zdanie z imiesłowowym równoważnikiem zdania na zdanie złożone.", answers: ["„Czytając książkę, zasnął.” → „Zasnął, kiedy czytał książkę.”", "„Czytając książkę, zasnął.” → „Zasnął, czytając książkę.”", "„Czytając książkę, zasnął.” → „Kiedy zasnął, czytał książkę.”"], correct: 0 },
+    { question: "Przekształć zdanie złożone na zdanie z imiesłowowym równoważnikiem zdania.", answers: ["„Kiedy czytał książkę, zasnął.” → „Czytając książkę, zasnął.”", "„Kiedy czytał książkę, zasnął.” → „Zasnął, kiedy czytał książkę.”", "„Kiedy czytał książkę, zasnął.” → „Czytając książkę.”"], correct: 0 },
+    { question: "Co to jest wypowiedzenie wielokrotnie złożone? Podaj przykład.", answers: ["Zdanie składające się z kilku zdań pojedynczych, np. „Poszliśmy do kina, a potem na kolację.”", "Zdanie zawierające wiele przymiotników, np. „Piękny, słoneczny dzień.”", "Zdanie o dużej liczbie rzeczowników, np. „Dom, ogród, samochód.”"], correct: 0 },
+    { question: "Czym różni się mowa zależna od niezależnej?", answers: ["Mowa zależna przytacza wypowiedź w formie bezpośredniej, mowa niezależna w formie pośredniej.", "Mowa zależna jest formą pośrednią, mowa niezależna jest formą bezpośrednią.", "Mowa zależna jest używana tylko w literaturze, mowa niezależna tylko w mowie potocznej."], correct: 1 },
+    { question: "Przekształć mowę zależną na niezależną.", answers: ["„Powiedział, że jest zmęczony.” → „Jestem zmęczony.”", "„Powiedział, że jest zmęczony.” → „On jest zmęczony.”", "„Powiedział, że jest zmęczony.” → „Zmieniam się.”"], correct: 0 },
+    { question: "Przekształć mowę niezależną na zależną.", answers: ["„Jestem zmęczony.” → „Powiedział, że jest zmęczony.”", "„Jestem zmęczony.” → „Zmęczony jestem.”", "„Jestem zmęczony.” → „Zmęczony mówi.”"], correct: 0 },
+    { question: "Wyjaśnij zasady dotyczące wyjątków od reguły polskiego akcentu.", answers: ["Akcent pada zawsze na przedostatnią sylabę, z wyjątkami dla niektórych form czasowników i zapożyczeń.", "Akcent pada zawsze na pierwszą sylabę, z wyjątkami dla nazw własnych.", "Akcent pada zawsze na ostatnią sylabę, z wyjątkami dla przymiotników."], correct: 0 },
+    { question: "Wskaż przykład słownictwa ogólnonarodowego i słownictwa o ograniczonym zasięgu.", answers: ["„Chleb” – ogólnonarodowe, „pyra” – regionalne.", "„Samochód” – ogólnonarodowe, „auto” – regionalne.", "„Drzewo” – ogólnonarodowe, „drzewko” – regionalne."], correct: 0 },
+    { question: "Co to są terminy naukowe? Podaj przykład.", answers: ["Słowa używane w literaturze pięknej, np. „metafora”.", "Specjalistyczne wyrazy używane w nauce, np. „fotosynteza”.", "Słowa używane w języku potocznym, np. „telewizor”."], correct: 1 },
+    { question: "Wyjaśnij, co to są archaizmy.", answers: ["Wyrazy, które wyszły z użycia lub zmieniły znaczenie, np. „białogłowa”.", "Nowoczesne terminy techniczne, np. „smartfon”.", "Słowa używane tylko w slangu młodzieżowym."], correct: 0 },
+    { question: "Czym są kolokwializmy? Podaj przykład.", answers: ["Wyrazy lub zwroty używane w języku potocznym, np. „fajny”.", "Oficjalne terminy używane w dokumentach urzędowych.", "Słowa używane tylko w poezji."], correct: 0 },
+    { question: "Jak rozpoznać wyrazy rodzime i zapożyczone?", answers: ["Wyrazy rodzime mają polskie brzmienie i pochodzenie, zapożyczone często mają obce brzmienie.", "Wyrazy rodzime są krótkie, zapożyczone są długie.", "Wyrazy rodzime są używane w literaturze, zapożyczone w mowie potocznej."], correct: 0 },
+    { question: "Co to są skróty i skrótowce? Podaj przykład i wyjaśnij ich funkcje w tekście.", answers: ["Skróty to skrócone formy wyrazów, skrótowce to akronimy, np. „dr” (doktor), „PKP”.", "Skróty to wyrazy o podobnym znaczeniu, skrótowce to synonimy.", "Skróty to formy słowne, skrótowce to formy pisane."], correct: 0 },
+    { question: "Wskaż poprawną formę gramatyczną imienia i nazwiska w zdaniu: \"Spotkałem się z ___\".", answers: ["„Janem Kowalskim”", "„Jan Kowalski”", "„Jana Kowalskiego”"], correct: 0 },
+    { question: "Jak poprawnie odmieniać nazwy miejscowe?", answers: ["Nazwy miejscowe odmienia się według zasad deklinacji dla rzeczowników, np. „do Warszawy”.", "Nazwy miejscowe się nie odmieniają.", "Nazwy miejscowe odmienia się tylko w liczbie mnogiej."], correct: 0 },
+    { question: "Podaj przykład nazwy mieszkańców od nazwy miejscowości \"Warszawa\".", answers: ["Warszawiacy", "Warszawianie", "Warszawczycy"], correct: 0 },
+    { question: "Jakie są sposoby wzbogacania słownictwa? Podaj przykład.", answers: ["Zapożyczenia, neologizmy, złożenia, np. „komputer”.", "Użycie synonimów, antonimów, homonimów.", "Skracanie wyrazów, np. „telewizor” → „TV”."], correct: 0 },
+    { question: "Co to są homonimy? Podaj dwa przykłady.", answers: ["Wyrazy o tym samym brzmieniu, ale różnym znaczeniu, np. „zamek” (budowla) i „zamek” (w ubraniu).", "Wyrazy o podobnym znaczeniu, np. „dom” i „mieszkanie”.", "Wyrazy o przeciwnym znaczeniu, np. „dobry” i „zły”."], correct: 0 },
+    { question: "Wskaż regionalną odmianę języka w Polsce i podaj jej cechy charakterystyczne.", answers: ["Gwara śląska – użycie słów takich jak „gruba” (kopalnia) i „bifyj” (kredens).", "Język polski standardowy – brak regionalizmów.", "Gwara warszawska – użycie słów takich jak „pyra” (ziemniak)."], correct: 0 },
+    { question: "Czym różni się treść od zakresu znaczeniowego wyrazu? Podaj przykład.", answers: ["Treść to konkretne znaczenie wyrazu, zakres to zbiór wszystkich możliwych znaczeń.", "Treść to zbiór wszystkich możliwych znaczeń, zakres to konkretne znaczenie.", "Treść to znaczenie metaforyczne, zakres to znaczenie dosłowne."], correct: 0 },
+    { question: "Co to jest styl potoczny? Podaj przykład.", answers: ["Styl używany w codziennych rozmowach, np. „Co tam słychać?”", "Styl używany w literaturze pięknej, np. „Oda do radości”.", "Styl formalny używany w dokumentach urzędowych."], correct: 0 },
+    { question: "Wymień cechy stylu urzędowego.", answers: ["Formalność, precyzja, brak emocji.", "Żywiołowość, emocjonalność, bogactwo środków stylistycznych.", "Swoboda, humor, użycie kolokwializmów."], correct: 0 },
+    { question: "Jakie cechy ma styl artystyczny? Podaj przykład.", answers: ["Bogactwo środków stylistycznych, subiektywizm, obrazowość, np. „Pan Tadeusz”.", "Formalność, precyzja, brak emocji.", "Użycie fachowej terminologii, bezosobowość."], correct: 0 },
+   { question: "Co charakteryzuje styl naukowy? Podaj przykład.", answers: ["Precyzja, obiektywizm, użycie terminologii fachowej, np. artykuły naukowe.", "Żywiołowość, emocjonalność, bogactwo środków stylistycznych.", "Swoboda, humor, użycie kolokwializmów."], correct: 0 },
+    { question: "Co to jest styl publicystyczny? Wymień jego cechy.", answers: ["Przystępność, aktualność, subiektywizm.", "Formalność, precyzja, brak emocji.", "Użycie fachowej terminologii, bezosobowość."], correct: 0 },
+    { question: "Wyjaśnij, na czym polega grzeczność językowa.", answers: ["Używanie form grzecznościowych, unikanie wulgaryzmów, dostosowanie języka do odbiorcy.", "Unikanie używania języka potocznego w każdej sytuacji.", "Używanie tylko języka formalnego w rozmowach."], correct: 0 },
+    { question: "Wskaż przykłady normy językowej wzorcowej i użytkowej.", answers: ["Wzorcowa: „proszę pana”, użytkowa: „panie”.", "Wzorcowa: „proszę pana”, użytkowa: „proszę pana”.", "Wzorcowa: „proszę pana”, użytkowa: „panowie”."], correct: 0 },
+    { question: "Jakie są najczęstsze błędy językowe? Podaj przykład.", answers: ["Błędy ortograficzne, np. „rzeka” zamiast „rzeka”.", "Błędy frazeologiczne, np. „wziąć na barki” zamiast „wziąć na plecy”.", "Błędy składniowe, np. „poszłem” zamiast „poszedłem”."], correct: 2 },
+    { question: "Co to jest wymiana głosek w wyrazach pokrewnych? Podaj przykład.", answers: ["Zmiana jednej głoski na inną w wyrazach spokrewnionych, np. „ręka” – „rączka”.", "Skrócenie wyrazu przez usunięcie głoski, np. „telewizor” – „telewizja”.", "Dodanie głoski do wyrazu, np. „drzewo” – „drzewko”."], correct: 0 },
+    { question: "W jaki sposób przytaczamy cudze wypowiedzi? Wskaż odpowiednie znaki interpunkcyjne.", answers: ["Używając cudzysłowu, np. „Powiedział: „Jestem zmęczony.””", "Używając nawiasów, np. (Powiedział: Jestem zmęczony).", "Używając myślników, np. – Powiedział: Jestem zmęczony –"], correct: 0 },
+    { question: "Wymień różnice w pisowni samogłosek ustnych i nosowych.", answers: ["Samogłoski ustne piszemy jako „a”, „e”, „i”, „o”, „u”, a nosowe jako „ą”, „ę”.", "Samogłoski ustne piszemy jako „ą”, „ę”, a nosowe jako „a”, „e”.", "Samogłoski ustne piszemy jako „o”, „u”, a nosowe jako „i”, „y”."], correct: 0 },
+    { question: "Jakie są różnice między spółgłoskami twardymi a miękkimi? Podaj przykład.", answers: ["Spółgłoski twarde są wymawiane z większym naciskiem, np. „t”, a miękkie z mniejszym, np. „ć”.", "Spółgłoski twarde są zawsze wymawiane na końcu wyrazu, miękkie na początku.", "Spółgłoski twarde są wymawiane bez zmiękczenia, np. „b”, a miękkie z zmiękczeniem, np. „bi”."], correct: 2 },
+    { question: "Wymień różnice między spółgłoskami dźwięcznymi a bezdźwięcznymi.", answers: ["Spółgłoski dźwięczne są wymawiane z drżeniem strun głosowych, np. „b”, a bezdźwięczne bez drżenia, np. „p”.", "Spółgłoski dźwięczne są zawsze wymawiane na początku wyrazu, bezdźwięczne na końcu.", "Spółgłoski dźwięczne są wymawiane z większym naciskiem niż bezdźwięczne."], correct: 0 },
+    { question: "Jakie są zasady pisowni wyrazów nieodmiennych? Podaj przykład.", answers: ["Wyrazy nieodmienne piszemy zawsze małą literą, np. „ale”.", "Wyrazy nieodmienne nie zmieniają formy w odmianie, np. „wczoraj”.", "Wyrazy nieodmienne piszemy zawsze wielką literą."], correct: 1 },
+    { question: "Jak piszemy partykułę \"nie\" z różnymi częściami mowy? Podaj zasady i przykłady.", answers: ["Z czasownikami osobno, np. „nie lubię”, z przymiotnikami łącznie, np. „niedobry”.", "Z czasownikami łącznie, np. „nielubię”, z przymiotnikami osobno, np. „nie dobry”.", "Z czasownikami i przymiotnikami zawsze osobno."], correct: 0 },
+    { question: "Podaj zasady dotyczące pisowni \"nie\" z czasownikami.", answers: ["„Nie” z czasownikami piszemy zawsze osobno, np. „nie robię”.", "„Nie” z czasownikami piszemy zawsze łącznie.", "„Nie” z czasownikami piszemy osobno tylko w trybie rozkazującym."], correct: 0 },
+    { question: "Jak piszemy \"nie\" z przymiotnikami? Podaj przykłady.", answers: ["„Nie” z przymiotnikami piszemy łącznie, np. „niedobry”, „nieładny”.", "„Nie” z przymiotnikami piszemy osobno, np. „nie dobry”, „nie ładny”.", "„Nie” z przymiotnikami piszemy łącznie tylko w zdaniach przeczących."], correct: 0 },
+    { question: "Podaj zasady pisowni \"nie\" z przysłówkami.", answers: ["„Nie” z przysłówkami piszemy łącznie, gdy przysłówek jest w stopniu równym, np. „nieładnie”.", "„Nie” z przysłówkami piszemy zawsze osobno, np. „nie ładnie”.", "„Nie” z przysłówkami piszemy łącznie tylko w stopniu najwyższym."], correct: 0 },
+    { question: "Co to są formanty słowotwórcze? Wymień rodzaje i podaj przykłady.", answers: ["Elementy dodawane do tematu wyrazu w celu utworzenia nowego wyrazu, np. przyrostki, przedrostki.", "Elementy zmieniające brzmienie wyrazu, np. akcenty.", "Elementy używane do skracania wyrazów, np. apostrofy."], correct: 0 },
+    { question: "Jakie są zasady akcentowania wyrazów w języku polskim?", answers: ["Akcent pada zazwyczaj na przedostatnią sylabę, z wyjątkiem niektórych form czasowników i wyrazów zapożyczonych.", "Akcent pada zawsze na ostatnią sylabę.", "Akcent pada zawsze na pierwszą sylabę."], correct: 0 },
+    { question: "Podaj przykład wyrazu pochodnego z formantem i wyjaśnij jego znaczenie.", answers: ["„Malować” → „Malowanie”; formant „-anie” tworzy rzeczownik odczasownikowy.", "„Dom” → „domowy”; formant „-owy” tworzy przymiotnik od rzeczownika.", "„Kwiat” → „kwiatowy”; formant „-owy” tworzy rzeczownik od przymiotnika."], correct: 1 },
+    { question: "Jakie są typy wyrazów złożonych? Podaj przykłady.", answers: ["Złożenia, zestawienia, zrosty, np. „samochód”, „Białołęka”, „listonosz”.", "Przymiotniki, rzeczowniki, czasowniki, np. „zielony”, „dom”, „biegać”.", "Synonimy, antonimy, homonimy, np. „dobry”, „zły”, „zamek”."], correct: 0 }
+];
+
+        const backgrounds = [
+    "https://www.tapetynapulpitkomputera.pl/php/timthumb.php?src=uploads/556aa6c465067_1920x1080.jpg&h=600&w=600&q=70",
+    "https://www.tapetynapulpitkomputera.pl/php/timthumb.php?src=uploads/54f1501c550a9_1920x1200.jpg&h=600&w=600&q=70",
+    "https://www.tapetynapulpitkomputera.pl/php/timthumb.php?src=uploads/54f1501c7dee8_1920x1200.jpg&h=600&w=600&q=70",
+    "https://www.tapetynapulpitkomputera.pl/php/timthumb.php?src=uploads/54f1501cd7ec4_1920x1080.png&h=600&w=600&q=70",
+    "https://www.tapetynapulpitkomputera.pl/php/timthumb.php?src=uploads/556aa6c42c313_1920x1080.png&h=600&w=600&q=70",
+    "https://www.tapetynapulpitkomputera.pl/php/timthumb.php?src=uploads/54f1501c469de_1920x1080.jpg&h=600&w=600&q=70",
+    "https://www.tapetynapulpitkomputera.pl/php/timthumb.php?src=uploads/560f97f991e17_1680x1050.jpg&h=600&w=600&q=70",
+    "https://www.tapetynapulpitkomputera.pl/php/timthumb.php?src=uploads/54f1501c576fd_1920x1200.jpg&h=600&w=600&q=70",
+    "https://www.tapetynapulpitkomputera.pl/php/timthumb.php?src=uploads/556aa6c44420e_1920x1080.jpg&h=600&w=600&q=70",
+    "https://www.tapetynapulpitkomputera.pl/php/timthumb.php?src=uploads/556aa6c4a28cc_1920x1200.jpg&h=600&w=600&q=70"
+
+        ];
+
+        let currentQuestions = [];
+
+        function getRandomQuestions() {
+            return allQuestions.sort(() => 0.5 - Math.random()).slice(0, 10);
+        }
+
+        function setTextColorBasedOnBackground(imageUrl) {
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+            img.src = imageUrl;
+
+            img.onload = function () {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0, img.width, img.height);
+
+                const imageData = ctx.getImageData(0, 0, img.width, img.height);
+                let r = 0, g = 0, b = 0;
+
+                for (let i = 0; i < imageData.data.length; i += 4) {
+                    r += imageData.data[i];
+                    g += imageData.data[i + 1];
+                    b += imageData.data[i + 2];
+                }
+
+                const pixelCount = img.width * img.height;
+                r = r / pixelCount;
+                g = g / pixelCount;
+                b = b / pixelCount;
+
+                const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+                document.body.style.color = brightness > 128 ? '#000' : '#fff';
+            };
+        }
+
+        function refreshBackground() {
+            const randomIndex = Math.floor(Math.random() * backgrounds.length);
+            const selectedBackground = backgrounds[randomIndex];
+            document.body.style.backgroundImage = `url(${selectedBackground})`;
+            setTextColorBasedOnBackground(selectedBackground);
+        }
+
+        function loadQuestions() {
+            const quizContainer = document.getElementById('quiz-container');
+            quizContainer.innerHTML = currentQuestions.map((q, index) => `
+                <div class="question">
+                    <p>${index + 1}. ${q.question}</p>
+                    ${q.answers.map((answer, i) => `
+                        <div class="answer">
+                            <input type="radio" name="question${index}" id="question${index}answer${i}" value="${i}">
+                            <label for="question${index}answer${i}">${answer}</label>
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('');
+        }
+
+        function checkAnswers() {
+            const resultContainer = document.getElementById('result');
+            let score = 0;
+
+            currentQuestions.forEach((question, qIndex) => {
+                const selectedAnswer = document.querySelector(`input[name="question${qIndex}"]:checked`);
+                if (selectedAnswer) {
+                    const selectedValue = parseInt(selectedAnswer.value);
+                    const correctAnswer = question.correct;
+
+                    const answerLabels = document.querySelectorAll(`input[name="question${qIndex}"] + label`);
+                    answerLabels.forEach((label, aIndex) => {
+                        if (aIndex === correctAnswer) {
+                            label.classList.add('correct');
+                            label.classList.add('underline');
+                        } else if (aIndex === selectedValue) {
+                            label.classList.add('incorrect');
+                        }
+                    });
+
+                    if (selectedValue === correctAnswer) {
+                        score++;
+                    }
+                }
+            });
+
+            const motivationalMessage = getMotivationalMessage(score);
+            resultContainer.innerHTML = `Wynik: ${score}/10<br>${motivationalMessage}`;
+        }
+
+        function getMotivationalMessage(score) {
+            if (score === 10) {
+                return "Świetna robota! Jesteś Mistrzem! Kochamy Cię!";
+            } else if (score >= 7) {
+                return "Bardzo dobrze! Wymiatasz! Jesteśmy z Ciebie dumni";
+            } else if (score >= 5) {
+                return "Nieźle! Dajesz radę! Buziaki ";
+            } else {
+                return "Nic się nie stało Hubcio! Próbuj dalej! Potrafisz";
+            }
+        }
+
+        function retryQuiz() {
+            document.querySelectorAll('.answer label').forEach(label => {
+                label.classList.remove('correct', 'incorrect', 'underline');
+            });
+            document.querySelectorAll('input[type="radio"]').forEach(input => {
+                input.checked = false;
+            });
+            document.getElementById('result').innerHTML = ""; // Zresetuj wynik
+        }
+
+        function refreshPage() {
+            refreshBackground();
+            currentQuestions = getRandomQuestions();
+            loadQuestions();
+        }
+
+        // Load initial questions and background
+        refreshBackground();
+        currentQuestions = getRandomQuestions();
+        loadQuestions();
+    </script>
+</body>
+</html>
